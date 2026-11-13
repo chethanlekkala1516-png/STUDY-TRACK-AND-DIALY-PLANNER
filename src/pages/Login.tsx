@@ -34,10 +34,39 @@ export default function Login() {
 
   const handleDemoSignIn = async () => {
     setLoading(true);
-    await signIn('alex.morgan@studyflow.edu', 'demo1234');
+    const result = await signIn('alex.morgan@studyflow.edu', 'demo1234');
     setLoading(false);
-    toast({ title: 'Signed in as Alex Morgan (Demo Student)', type: 'success' });
-    navigate('/dashboard');
+    if (result.error) {
+      // Fallback to local demo mode when Supabase sign‑in fails
+      toast({ title: 'Demo login fallback', description: result.error, type: 'warning' });
+      // Manually set demo user/profile (mirrors AuthProvider defaults)
+      const mockUser = {
+        id: 'demo-student-id-101',
+        email: 'alex.morgan@studyflow.edu',
+        app_metadata: {},
+        user_metadata: { full_name: 'Alex Morgan' },
+        aud: 'authenticated',
+        created_at: new Date().toISOString(),
+      } as any;
+      const mockProfile = {
+        id: 'demo-student-id-101',
+        full_name: 'Alex Morgan',
+        email: 'alex.morgan@studyflow.edu',
+        avatar_url: null,
+        institution: 'Stanford University',
+        course: 'Computer Science & Engineering',
+        semester: 'Semester 5',
+        created_at: new Date().toISOString(),
+      };
+      // Directly assign to context by reusing signIn side‑effects is not possible here,
+      // so we perform a hard navigation which will trigger the AuthProvider's local init.
+      window.location.href = '/dashboard';
+    } else {
+      toast({ title: 'Signed in as Alex Morgan (Demo Student)', type: 'success' });
+      navigate('/dashboard');
+      // Ensure navigation works even if router blocks
+      window.location.href = '/dashboard';
+    }
   };
 
   return (
